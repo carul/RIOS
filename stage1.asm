@@ -10,7 +10,7 @@ start:
 
 	;preparing to read stage 2 sectors
 	mov ah, 2
-	mov al, 1 ;read 3 sectors
+	mov al, 72 ;read 3 sectors
 	mov ch, 0
 	mov cl, 2
 	mov dh, 0
