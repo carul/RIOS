@@ -47,10 +47,49 @@ code_32:
 
 code_64:
 	use64
-	mov rax, 0xb8000
-	mov rdx, 0x41414141
-	mov [rax], rdx
-	jmp $
+	mov rsi, [0x20000 + kernel_entry + 0x20]
+	add rsi, 0x20000 + kernel_entry
+	movzx ecx, word [0x20000+kernel_entry+0x38]
+
+	cld
+
+	xor r14, r14
+
+	.loadloop:
+	mov eax, [rsi+0]
+	cmp eax, 1
+	jne .next
+	mov r8, [rsi + 8]
+	mov r9, [rsi + 0x10]
+	mov r10, [rsi + 0x20]
+	;;;=======
+	test r14, r14
+	jnz .skip
+	mov r14, r9
+	.skip:
+
+	;;;-------
+	mov rbp, rsi
+	mov r15, rcx
+
+	lea rsi, [0x20000 + kernel_entry + r8d]
+	mov rdi, r9
+	mov rcx, r10
+	rep movsb
+
+	mov rcx, r15
+	mov rsi, rbp
+
+	.next:
+	add rsi, 0x20
+	loop .loadloop
+
+	mov rsp, 0x30f000
+
+	mov rdi, r14
+	mov rax, [0x20000 + kernel_entry + 0x18]
+	call rax
+	
 
 ;;GLOBAL DESCRIPTOR TABLE;;
 
@@ -99,3 +138,8 @@ dq 511 dup(0)
 PAGING_LAYER3:
 dq 1 or 10b or 10000000b
 dq 511 dup(0)
+
+
+times (512- ($-$$) mod 512) db 0
+
+kernel_entry:
