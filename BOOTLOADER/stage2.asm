@@ -47,6 +47,13 @@ code_32:
 
 code_64:
 	use64
+
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
+
+
 	mov rsi, [0x20000 + kernel_entry + 0x20]
 	add rsi, 0x20000 + kernel_entry
 	movzx ecx, word [0x20000+kernel_entry+0x38]
@@ -59,9 +66,12 @@ code_64:
 	mov eax, [rsi+0]
 	cmp eax, 1
 	jne .next
+
+
 	mov r8, [rsi + 8]
 	mov r9, [rsi + 0x10]
 	mov r10, [rsi + 0x20]
+	mov r11, [rsi + 0x28]
 	;;;=======
 	test r14, r14
 	jnz .skip
@@ -71,18 +81,25 @@ code_64:
 	;;;-------
 	mov rbp, rsi
 	mov r15, rcx
+;;200bd
+
+	mov rdi, r9
+	mov rcx, r11
+	xor al, al
+	rep stosb
 
 	lea rsi, [0x20000 + kernel_entry + r8d]
 	mov rdi, r9
 	mov rcx, r10
 	rep movsb
-
 	mov rcx, r15
 	mov rsi, rbp
+;	xor rcx, 0xffffffffffffffff
 
 	.next:
-	add rsi, 0x20
+	add rsi, 0x38
 	loop .loadloop
+
 
 	mov rsp, 0x30f000
 
