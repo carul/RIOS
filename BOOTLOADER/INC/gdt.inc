@@ -10,7 +10,7 @@ create_gdt: ;(num of gdt parts, )
     call data_segment_byte_options
     mov [GDT_32_BEGIN+10], eax
     lgdt [GDT_32_STRUCT]
-    jmp $
+    ret
 
 setbit: ;gets from eax, returns in eax
     ; bytes to move in bx

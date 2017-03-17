@@ -4,6 +4,7 @@ run: deploy_all
 	bochs -f bochsrc
 
 deploy_all: deploy_kernel
+	
 
 deploy_kernel: compile_kernel deploy_bootloader
 	strip ./KERNEL/kernel.bin
