@@ -1,4 +1,4 @@
-SECTOREAD equ 1
+SECTOREAD equ 20
 jmp far 0x0000:(0x7c00-SHIFT+dap_read-start+4+1)
 
 dap_read: 
@@ -32,4 +32,18 @@ ers: ;assume floppy
     mov cl, 2 
     mov dh, 0
     int 13h
+	jc ers2
     jmp far 0x0000:0x7c00
+
+ers2: ;assume USB
+	mov ax, 0x0000
+    mov es, ax
+    mov bx, 0x7c00
+	mov ah ,2
+	mov al, SECTOREAD
+	mov ch, 0
+	mov cl, 2
+	mov dh, 0
+	mov dl, 0x80
+	int 0x13
+	jmp far 0x0000:0x7c00
