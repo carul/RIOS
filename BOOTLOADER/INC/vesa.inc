@@ -92,6 +92,39 @@ run_in_vesa:
         pop es
         cmp ax, 0x004F
         jne .error
+        ;now we will save our videomode information to 0x500
+        ;HIS for short (Hardware Info Structure)
+        mov di, 0x500
+        mov ecx, 0
+
+        .ls:
+            mov al, [HIS_BGIN+ecx]
+            cmp al, 0x00
+            je .ous
+            stosb
+            inc cx
+            jmp .ls
+        .ous:
+        
+        mov eax, [FinalStruct.FrameBuffer]
+        stosd
+        mov ax, [FinalStruct.Pitch]
+        stosw
+        mov al, [FinalStruct.ColorDepth]
+        stosb
+        mov ax, [FinalStruct.Width]
+        stosw
+        mov ax, [FinalStruct.Height]
+        stosw
+        mov ecx, 0
+        .ls2:
+            mov al, [MEM_DATA+ecx]
+            cmp al, 0x00
+            je .ous2
+            stosb
+            inc cx
+            jmp .ls2
+        .ous2:
         ret
 
 
@@ -106,6 +139,11 @@ run_in_vesa:
         cli
         hlt
         jmp $
+
+
+HIS_BGIN: db "HIS_BGIN", 0x00
+MEM_DATA: db "MEM_DATA", 0x00
+
 ;this structure will be filled by INT call
 ;initialising every label so later they can be easily accesed
 VBEInfoBlock:

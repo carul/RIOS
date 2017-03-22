@@ -2,58 +2,85 @@ SMAP equ 0x0534D4150
 
 memory_map:
     pushad
-    xor ebx, ebx
-    .e820call:
-        mov eax, 0xE820
-        mov di, MemStruct
-        mov [es:di+20], dword 1
-        mov ecx, 24
-        mov edx, SMAP
-        int 0x15
-        jc .fin
-        cmp eax, SMAP
-        jne .err
-        cmp ebx, 0
-        jz .fin
-        cmp dword [MemStruct.RegionType], 1
-        jne .e820call
-    .entry:
-        jcxz .skipentry
-        cmp cl, 20
-        jbe .validentry
-        test byte [es:di+20], 1 ;test if ACPI 3 byte is set, if so, skip result
-        je .skipentry
-    .validentry:
-        mov eax, dword [MemStruct.RegionLength]
-        add eax, dword [MemStruct.RegionLength+4]
-        cmp eax, 0 ; check if entry length is 0
-        je .e820call
-        add dword [MemSize], eax
-        mov eax, dword [MemStruct.RegionLength+4];this will be higher memory
-        cmp eax, 0
-        je .e820call 
-        add dword [MemSize+4], eax
-        jmp .e820call
-    .skipentry:
-        cmp ebx, 0 ;list is finalised when ebx is zero
-        jne .e820call
-
+    push ebp
+    mov ebp, esp
+    sub esp, 0x4
+    mov dword [ebp-4], 0
+    xor ebx, ebx    
+        .e820first: 
+            mov edx, SMAP
+            mov eax, 0xe820
+            xor ebx ,ebx
+            mov [es:di+20], dword 1
+            mov ecx, 24
+            int 0x15
+            jc .lerr
+            mov edx, SMAP
+            cmp eax, edx
+            jne .lerr
+            test ebx, ebx
+            je .lerr
+            jmp .testres
+        .e820:
+            mov eax, 0xe820
+            mov [es:di + 20], dword 1 ; get acpi v3 entry if possible
+            mov ecx, 24
+            int 0x15
+            jc .fin
+            mov edx, SMAP
+        .testres:
+            jcxz .wrong
+            cmp cl, 20
+            jbe .good
+            test byte [es:di + 20], 1
+            je .wrong
+        .good:
+            mov ecx, [es:di + 8]
+            or ecx, [es:di + 12]
+            jz .wrong
+            inc dword [ebp-4]
+            add di, 24
+        .wrong:
+            test ebx, ebx
+            jne .e820
     .fin:
+    mov dword eax, [ebp-4]
+    mov esp, ebp
+    pop ebp
+    ; valid entry count in eax
+    ; di set to address of last 
+    mov edx, eax
+    xor ecx, ecx
+        .ls:
+            mov al, [ENTRY_NUM+ecx]
+            cmp al, 0x00
+            je .ous
+            stosb
+            inc cx
+            jmp .ls
+        .ous:
+    
+    mov eax, edx
+    stosd
+    
+    xor ecx, ecx
+        .ls2:
+            mov al, [SYS_EOIS+ecx]
+            cmp al, 0x00
+            je .ous2
+            stosb
+            inc cx
+            jmp .ls2
+        .ous2:
+
     popad
-    mov eax, dword [MemSize]
-    mov ebx, dword [MemSize+4]
     ret
 
-    .err:
-        .lerr:
-            nop
-            nop
-            jmp .lerr
+    .lerr:
+       nop
+       nop
+       jmp .lerr
 
-MemStruct:
-    .BaseAddr: dq 0
-    .RegionLength: dq 0
-    .RegionType: dd 0
-    .ACPIExt: dd 0
 
-MemSize dq 0
+ENTRY_NUM: db "ENTRY_NUM", 0x00
+SYS_EOIS: db "SYS_EOIS", 0x00
