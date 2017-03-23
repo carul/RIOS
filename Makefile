@@ -8,6 +8,7 @@ deploy_all: deploy_kernel
 
 deploy_kernel: compile_kernel deploy_bootloader
 	strip ./KERNEL/kernel.bin
+	objcopy -O binary ./KERNEL/kernel.bin ./KERNEL/kernel.bin
 	cat ./KERNEL/kernel.bin >> floppy.bin
 
 compile_kernel:

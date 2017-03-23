@@ -13,9 +13,15 @@ stage2_start:
     call run_in_vesa;be carefull and keep track of di now, since we are going to store memory map output into it
     call memory_map
     call create_gdt
+    
     ;since other calls might modify GDT (for example VESA)
     ;make sure to call create_gdt as last call before 32-bit mode
-    jmp e_o_s2
+    cli
+    mov eax, cr0
+    or eax, 1
+    mov cr0, eax
+
+    jmp dword 0x8:e_o_s2
 
 
 zero_his: ;we will create a hardware info structure, which will contain:

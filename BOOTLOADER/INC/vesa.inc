@@ -58,13 +58,13 @@ run_in_vesa:
             shr eax, 7
             cmp al, 1
             jne .not_wanted
-            ;we want 800 pixels screen width
+            ;we want 1280 pixels screen width
             mov ax, [VBEModeInfoStructure.Width]
-            cmp ax, 1024
+            cmp ax, 1280
             jne .not_wanted
-            ;600 height
+            ;720 height
             mov ax, [VBEModeInfoStructure.Height]
-            cmp ax, 768
+            cmp ax, 720
             jne .not_wanted
             ;and 32 bit color depth
             mov al, [VBEModeInfoStructure.BPP]
