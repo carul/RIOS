@@ -1,41 +1,29 @@
 gdt64_install:
-    lgdt[GDT_64_STRUCT]
+    lgdt[GDT64.Pointer]
     ret
 
-GDT_64_STRUCT:
-    dw GDT_64_END-GDT_64_BEGIN-1
-    dd GDT_64_BEGIN
-
-
-
-GDT_64_BEGIN:
-
-    dq 0
-
-;ring 0 ; code
-    dd 0xffff
-    db 0;base
-    db 10011110b;acces
-    db 10101111b;granularity
-    db 0;base
-        ;data
-    dd 0xffff
-    db 0;base
-    db 10010010b;acces
-    db 10101111b;granularity
-    db 0;base
-
-;ring 3 ; code
-    dd 0xffff
-    db 0;base
-    db 11110000b;acces
-    db 10101111b;granularity
-    db 0;base
-        ;data
-    dd 0xffff
-    db 0;base
-    db 11110000b;acces
-    db 10101111b;granularity
-    db 0;base
-
-GDT_64_END:
+GDT64:               
+    .Null: 
+    dw 0             
+    dw 0             
+    db 0             
+    db 0             
+    db 0             
+    db 0             
+    .Code:
+    dw 0             
+    dw 0             
+    db 0             
+    db 10011010b     
+    db 00100000b     
+    db 0             
+    .Data:
+    dw 0             
+    dw 0             
+    db 0             
+    db 10010010b     
+    db 00000000b     
+    db 0             
+    .Pointer:        
+    dw $ - GDT64 - 1 
+    dq GDT64         

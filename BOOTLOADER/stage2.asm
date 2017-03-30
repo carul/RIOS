@@ -20,8 +20,9 @@ stage2_start:
     mov eax, cr0
     or eax, 1
     mov cr0, eax
+    lea ebx, [$+5]
+    jmp dword 0x8:e_o_s2 ;;size of this instruction is 5 bytes
 
-    jmp dword 0x8:e_o_s2
 
 
 zero_his: ;we will create a hardware info structure, which will contain:
@@ -37,4 +38,35 @@ zero_his: ;we will create a hardware info structure, which will contain:
     ret
 
 
+  ;;  include 'INC/gdt64.inc'
+
 e_o_s2:
+    use32
+    mov ax, 0x10 
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+    mov eax, [0x500+8];framebuffer address
+    mov ecx, 1280*720
+    .l:
+    mov dword [eax+4*ecx], 0x0000ff00
+    dec ecx
+    cmp ecx, 0
+    jg .l
+    ;if screen gets green - we are in real mode!
+           
+
+    jmp $
+longmode:
+    jmp $
+
+    use64
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+    jmp $
+
+ 

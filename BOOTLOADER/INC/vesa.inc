@@ -30,6 +30,20 @@ get_pixel_position:
     ret 
 
 run_in_vesa:
+    mov di, 0x500
+    mov ecx, 0
+
+        .ls:
+            mov al, [HIS_BGIN+ecx]
+            cmp al, 0x00
+            je .ous
+            stosb
+            inc cx
+            jmp .ls
+        .ous:
+
+    mov [0x1000], di
+
     mov ax, 0x4F00
     mov di, VBEInfoBlock
     push es
@@ -58,6 +72,7 @@ run_in_vesa:
             shr eax, 7
             cmp al, 1
             jne .not_wanted
+            call .valid
             ;we want 1280 pixels screen width
             mov ax, [VBEModeInfoStructure.Width]
             cmp ax, 1280
@@ -94,28 +109,8 @@ run_in_vesa:
         jne .error
         ;now we will save our videomode information to 0x500
         ;HIS for short (Hardware Info Structure)
-        mov di, 0x500
-        mov ecx, 0
 
-        .ls:
-            mov al, [HIS_BGIN+ecx]
-            cmp al, 0x00
-            je .ous
-            stosb
-            inc cx
-            jmp .ls
-        .ous:
-        
-        mov eax, [FinalStruct.FrameBuffer]
-        stosd
-        mov ax, [FinalStruct.Pitch]
-        stosw
-        mov al, [FinalStruct.ColorDepth]
-        stosb
-        mov ax, [FinalStruct.Width]
-        stosw
-        mov ax, [FinalStruct.Height]
-        stosw
+        mov di, [0x1000]
         mov ecx, 0
         .ls2:
             mov al, [MEM_DATA+ecx]
@@ -139,6 +134,23 @@ run_in_vesa:
         cli
         hlt
         jmp $
+
+    .valid:
+        push di
+        mov di, [0x1000]
+        mov eax, [VBEModeInfoStructure.FrameBuffer]
+        stosd
+        mov ax, [VBEModeInfoStructure.Pitch]
+        stosw
+        mov al, [VBEModeInfoStructure.BPP]
+        stosb
+        mov ax, [VBEModeInfoStructure.Width]
+        stosw
+        mov ax, [VBEModeInfoStructure.Height]
+        stosw
+        mov [0x1000], di
+        pop di
+        ret
 
 
 HIS_BGIN: db "HIS_BGIN", 0x00
