@@ -1,5 +1,8 @@
 all: run
 
+qrun: deploy_all
+	qemu-system-i386 kernel.bin
+
 run: deploy_all
 	bochs -f bochsrc -q
 
