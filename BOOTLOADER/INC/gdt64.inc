@@ -1,29 +1,20 @@
 gdt64_install:
-    lgdt[GDT64.Pointer]
+    lgdt[GDT_addr]
     ret
 
-GDT64:               
-    .Null: 
-    dw 0             
-    dw 0             
-    db 0             
-    db 0             
-    db 0             
-    db 0             
-    .Code:
-    dw 0             
-    dw 0             
-    db 0             
-    db 10011010b     
-    db 00100000b     
-    db 0             
-    .Data:
-    dw 0             
-    dw 0             
-    db 0             
-    db 10010010b     
-    db 00000000b     
-    db 0             
-    .Pointer:        
-    dw $ - GDT64 - 1 
-    dq GDT64         
+
+    GDT_addr:
+    dw (GDT64_end - GDT64) - 1
+    dd GDT64
+
+    GDT64:
+    dd 0, 0
+
+    dd 0xffff  ; segment limit
+    dd 0xaf9a00
+
+    dd 0xffff  ; segment limit
+    dd 0xaf9200
+
+    dd 0, 0
+    GDT64_end:
