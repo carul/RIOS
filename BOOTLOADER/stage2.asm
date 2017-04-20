@@ -85,22 +85,40 @@ e_o_s2:
         ret
 
 
-        GDT_addr:
-        dw (GDT64_end - GDT64) - 1
-        dd GDT64
+    GDT_addr:
+            dw (GDT64_end - GDT64) - 1
+            dq GDT64                     ; Use quadword so we can use this GDT table
+                                         ;     from 64-bit mode if necessary
 
-        GDT64:
-        dd 0, 0
+    align 8                              ; Intel suggests GDT should be 8 byte aligned
 
-        dd 0xffff  ; segment limit
-        dd 0xef9a00
+        GDT64:                           ; Global Descriptor Table (64-bit).
 
-        dd 0xffff  ; segment limit
-        dd 0xef9200
+        ; 64-bit descriptors should set all limit and base to 0
+        ; NULL Descriptor
+            dw 0                         ; Limit (low).
+            dw 0                         ; Base (low).
+            db 0                         ; Base (middle)
+            db 0                         ; Access.
+            db 0                         ; Flags.
+            db 0                         ; Base (high).
 
-        dd 0, 0
+        ; 64-bit Code descriptor
+            dw 0                         ; Limit (low).
+            dw 0                         ; Base (low).
+            db 0                         ; Base (middle)
+            db 10011010b                 ; Access (present/exec/read).
+            db 00100000b                 ; Flags 64-bit descriptor
+            db 0                         ; Base (high).
+
+        ; 64-bit Data descriptor
+            dw 0                         ; Limit (low).
+            dw 0                         ; Base (low).
+            db 0                         ; Base (middle)
+            db 10010010b                 ; Access (present/read&write).
+            db 00100000b                 ; Flags 64-bit descriptor.
+            db 0                         ; Base (high).
         GDT64_end:
-
 
 align 4096 ;;align to 4 KB
     PML4:
@@ -125,6 +143,47 @@ align 4096 ;;align to 4 KB
         mov fs, ax
         mov gs, ax
         mov ss, ax
-        jmp $
+        ;;we are now in long mode
+        ;;time to load elf header
+        mov rsi, elf
+        add rsi, [elf+0x20]
+        movzx rcx, word [elf + 0x38]
+        xor rbx, rbx
+        mov bx, [elf+0x36]
+        cld
+        .loadloop:
+            mov eax, [rsi]
+            cmp eax, 1
+            jne .next
 
-jmp $
+            mov r8, [rsi + 0x8]
+            mov r9, [rsi + 0x10]
+            mov r10, [rsi + 0x20]
+            mov r11, [rsi + 0x28]
+
+            mov r15, rcx
+            mov rbp, rsi
+
+            mov rdi, r9
+            mov rcx, r11
+            xor al, al
+            rep stosb
+
+            lea rsi, [elf + r8d]
+            mov rdi, r9
+            mov rcx, r10
+            rep movsb
+
+            mov rcx, r15
+            mov rsi, rbp
+        .next:
+            add rsi, rbx
+            loop .loadloop
+
+        mov rax, [elf + 0x18]
+        ;;mov ss, [$-1];
+        call rax
+
+KERNEL_INFO:
+    eentry dq 0
+elf:

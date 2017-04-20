@@ -27,7 +27,7 @@ get_pixel_position:
     add ecx, ebx
     mov esp, ebp
     pop ebp
-    ret 
+    ret
 
 run_in_vesa:
     mov di, 0x500
@@ -125,7 +125,7 @@ run_in_vesa:
 
     .error:
         mov bx, 0xb800
-        mov es, bx	
+        mov es, bx
         xor di, di
         mov al, ' '
         mov ah, 0xf0
@@ -173,7 +173,7 @@ VBEInfoBlock:
     .OemData: db 256 dup(0)
 
 ;okay its really easier to declare it by hand than
-;to calculate the address 
+;to calculate the address
 VBEModeInfoStructure:
     .Attributes: dw 0 ; bit 7 indicates linear frame buffer support
     .WindowA: db 0

@@ -1,7 +1,7 @@
-SECTOREAD equ 20
+SECTOREAD equ 122
 jmp far 0x0000:(0x7c00-SHIFT+dap_read-start+4+1)
 
-dap_read: 
+dap_read:
 	mov word [dap_struct.cnt-SHIFT], SECTOREAD ;read just one sector
 	mov dword [dap_struct.dst-SHIFT], 0x7c00
 	mov dword [dap_struct.srcl-SHIFT], 0x01 ;start from sector 1
@@ -26,10 +26,10 @@ ers: ;assume floppy
 	mov ax, 0x0000
     mov es, ax
     mov bx, 0x7c00
-    mov ah, 2  
+    mov ah, 2
     mov al, SECTOREAD
     mov ch, 0
-    mov cl, 2 
+    mov cl, 2
     mov dh, 0
     int 13h
 	jc ers2
