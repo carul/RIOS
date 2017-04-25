@@ -56,7 +56,7 @@ run_in_vesa:
     .count_start:
         lodsw
         cmp ax, 0xFFFF ; if this, end of supported video modes
-        je .error
+        je .count_finish
             mov bx, ax
             mov cx, ax
             mov ax, 0x4F01
@@ -97,10 +97,12 @@ run_in_vesa:
             mov dl, [VBEModeInfoStructure.BPP]
             mov [FinalStruct.ColorDepth], dl
             or bx, 0x4000
-            jmp .count_finish
+            mov word [0x1200], bx
+            jmp .count_start
     .not_wanted:
         jmp .count_start
     .count_finish:
+        mov word bx, [0x1200]
         mov ax, 0x4F02
         push es
         int 0x10
@@ -128,7 +130,7 @@ run_in_vesa:
         mov es, bx
         xor di, di
         mov al, ' '
-        mov ah, 0xf0
+        mov ah, 0xcc
         mov ecx, 80*25
         rep stosw
         cli
@@ -148,6 +150,11 @@ run_in_vesa:
         stosw
         mov ax, [VBEModeInfoStructure.Height]
         stosw
+        mov ax, bx
+        or ax, 0x4000
+        stosw
+        mov eax, 0xbacabaca
+        stosd
         mov [0x1000], di
         pop di
         ret

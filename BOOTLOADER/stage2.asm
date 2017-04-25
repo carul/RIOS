@@ -13,7 +13,6 @@ stage2_start:
     call run_in_vesa;be carefull and keep track of di now, since we are going to store memory map output into it
     call memory_map
     call create_gdt
-
     ;since other calls might modify GDT (for example VESA)
     ;make sure to call create_gdt as last call before 32-bit mode
     cli
@@ -49,13 +48,15 @@ e_o_s2:
     mov eax, [0x500+8];framebuffer address
     mov ecx, 1280*720
     .l:
-    mov dword [eax+4*ecx], 0x0000ff00
+    mov dword [eax+4*ecx], 0x00000000
     dec ecx
     cmp ecx, 0
     jg .l
-    ;if screen gets green - we are in real mode!
+    ;if screen gets black - we are in real mode!
 
     ;;Now lets set up paging
+
+
     lea eax, [PML4]
     mov cr3, eax
 
@@ -122,12 +123,19 @@ e_o_s2:
 
 align 4096 ;;align to 4 KB
     PML4:
-        dq 0 or 1b or 10b or PDP;;preset bit, r/w bit
-        dq 511 dup(PDP or 10b)
+        dq 0 or 1b or 10b or PDP;;present bit, r/w bit
+        dq 0 or 1b or 10b or PDP
+        dq 0 or 1b or 10b or PDP
+        dq 0 or 1b or 10b or PDP
+        dq 508 dup(PDP or 10b)
     PDP:
         dq 0 or 1b or 10000000b ;;dq zero, because we map memory from start so 0x0000, present bit
+        dq 0x40000000 or 1b or 10000000b
+        dq 0x80000000 or 1b or 10000000b
+        dq 0xc0000000 or 1b or 10000000b
+        ;dq 0x40000001 or 1b or 10000000b
         ;;PDPE.PS to indicate 1gb pages
-        dq 511 dup(10000000b)
+        dq 508 dup(10000000b)
 
 ;;1 GB of memory is mapped statically, rest will be allocated in 64 bit mode
 
@@ -143,6 +151,18 @@ align 4096 ;;align to 4 KB
         mov fs, ax
         mov gs, ax
         mov ss, ax
+        mov rdx, PDP
+        mov rcx, 1
+        .PDPfill:
+            mov rbx, 0x40000000
+            imul rbx, rcx
+            or rbx, 1b
+            mov [rdx+rcx*8], rbx
+            inc rcx
+            cmp rcx, 511
+            jl .PDPfill
+
+        ;;512 GB of memory are mapped
         ;;we are now in long mode
         ;;time to load elf header
         mov rsi, elf

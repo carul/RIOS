@@ -1,6 +1,6 @@
 romimage: file=$BXSHARE/BIOS-bochs-latest
 cpuid: 1g_pages=1
-cpu: model=bx_generic, count=1, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="msrs.def", reset_on_triple_fault=0
+cpu: model=athlon64_venice, count=1, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="msrs.def", reset_on_triple_fault=0
 cpu: cpuid_limit_winnt=0
 memory: guest=1024, host=256
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
@@ -21,4 +21,4 @@ parport1: enabled=1, file="parport.out"
 mouse: enabled=0
 private_colormap: enabled=0
 pci: enabled=1, chipset=i440fx
-#display_library: x, options = "gui_debug"
+display_library: x, options = "gui_debug"

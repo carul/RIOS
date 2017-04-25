@@ -1,7 +1,7 @@
 all: run
 
 qrun: deploy_all
-	qemu-system-i386 kernel.bin
+	qemu-system-x86_64 -no-reboot floppy.bin
 
 run: deploy_all
 	bochs -f bochsrc -q
@@ -15,7 +15,7 @@ deploy_kernel: compile_kernel deploy_bootloader
 	cat ./KERNEL/kernel.bin >> floppy.bin
 
 compile_kernel:
-	g++ -nostdlib --entry kernel_main -m64 -masm=intel -std=c++14 ./KERNEL/kernel_main.cpp -o ./KERNEL/kernel.bin
+	g++ -nostdlib -m64 -masm=intel -std=c++14 ./KERNEL/kernel_main.cpp -o ./KERNEL/kernel.bin
 
 deploy_bootloader: compile_bootloader
 	cat ./BOOTLOADER/stage1.bin ./BOOTLOADER/stage2.bin > floppy.bin
