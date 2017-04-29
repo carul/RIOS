@@ -21,4 +21,4 @@ parport1: enabled=1, file="parport.out"
 mouse: enabled=0
 private_colormap: enabled=0
 pci: enabled=1, chipset=i440fx
-display_library: x, options = "gui_debug"
+#display_library: x, options = "gui_debug"

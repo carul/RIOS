@@ -55,7 +55,20 @@ e_o_s2:
     ;if screen gets black - we are in real mode!
 
     ;;Now lets set up paging
-
+    ;;map paging memory, first gigabyte in 32 bits, then
+    ;;remaining 7
+    mov ecx, 0
+    .lp1:
+        mov ebx, [PDP + ecx*8]
+        mov eax, 0x200000
+        mul ecx
+        or ebx, eax
+        or ebx, 1
+        lea eax, [PDP + ecx*8]
+        mov [eax], ebx
+        inc ecx
+        cmp ecx, 512
+        jl .lp1
 
     lea eax, [PML4]
     mov cr3, eax
@@ -74,7 +87,6 @@ e_o_s2:
     shl ebx, 31
     or eax, ebx
     mov cr0, eax
-
     call gdt64_install
     push 8
     push longmode
@@ -120,28 +132,57 @@ e_o_s2:
             db 00100000b                 ; Flags 64-bit descriptor.
             db 0                         ; Base (high).
         GDT64_end:
-
-align 4096 ;;align to 4 KB
-    PML4:
-        dq 0 or 1b or 10b or PDP;;present bit, r/w bit
-        dq 0 or 1b or 10b or PDP
-        dq 0 or 1b or 10b or PDP
-        dq 0 or 1b or 10b or PDP
-        dq 508 dup(PDP or 10b)
-    PDP:
-        dq 0 or 1b or 10000000b ;;dq zero, because we map memory from start so 0x0000, present bit
-        dq 0x40000000 or 1b or 10000000b
-        dq 0x80000000 or 1b or 10000000b
-        dq 0xc0000000 or 1b or 10000000b
-        ;dq 0x40000001 or 1b or 10000000b
-        ;;PDPE.PS to indicate 1gb pages
-        dq 508 dup(10000000b)
+;;1GB pages- disabled
+;;align 4096 ;;align to 4 KB
+;;    PML4:
+;;        dq 0 or 1b or 10b or PDP;;present bit, r/w bit
+;;        dq 508 dup(PDP or 10b)
+;;    PDP:
+;;        dq 0x00000000 or 1b or 10000000b ;;dq zero, because we map memory from start so 0x0000, present bit
+;;        dq 0x40000001 or 1b or 10000000b
+;;        dq 0x80000001 or 1b or 10000000b
+;;        dq 0xc0000001 or 1b or 10000000b
+;;        ;dq 0x40000001 or 1b or 10000000b
+;;        ;;PDPE.PS to indicate 1gb pages
+;;        dq 508 dup(10000000b)
 
 ;;1 GB of memory is mapped statically, rest will be allocated in 64 bit mode
 
 ;;include 'INC/gdt64.inc'
 
 
+;;2MB pages
+align 4096
+PML4:
+    dq PDPT or 11b
+    dq 511 dup (PDPT or 10b)
+PDPT:
+    dq 11b or PDP
+    dq 11b or PDP2
+    dq 11b or PDP3
+    dq 11b or PDP4
+    dq 11b or PDP5
+    dq 11b or PDP6
+    dq 11b or PDP7
+    dq 11b or PDP8
+    dq 504 dup(10b)
+PDP:
+    dq 512 dup(0x82)
+PDP2:
+    dq 512 dup(0x82)
+PDP3:
+    dq 512 dup(0x82)
+PDP4:
+    dq 512 dup(0x82)
+PDP5:
+    dq 512 dup(0x82)
+PDP6:
+    dq 512 dup(0x82)
+PDP7:
+    dq 512 dup(0x82)
+PDP8:
+    dq 512 dup(0x82)
+;;MAPPING 8GB of RAM
 
     longmode:
         use64
@@ -153,18 +194,37 @@ align 4096 ;;align to 4 KB
         mov ss, ax
         mov rdx, PDP
         mov rcx, 1
-        .PDPfill:
-            mov rbx, 0x40000000
-            imul rbx, rcx
-            or rbx, 1b
-            mov [rdx+rcx*8], rbx
-            inc rcx
-            cmp rcx, 511
-            jl .PDPfill
 
-        ;;512 GB of memory are mapped
-        ;;we are now in long mode
-        ;;time to load elf header
+        ;;lets map the rest of the Memory
+        ;;we do not assume PC has 8GB available- we need it for linear framebuffer
+        mov r8, 1
+        .lpp2:
+            mov rcx, 0
+            .lp2:
+                mov r9, r8
+                imul r9, 4096
+                mov r10, rcx
+                imul r10, 8
+                add r9, r10
+                lea r10, [r9 + PDP];;entry address
+                mov r11, [r9 + PDP];;value to save
+                or r11, 1;;active
+                mov rax, 0x200000
+                imul rax, rcx
+                mov rbx, 0x40000000
+                imul rbx, r8
+                or rax, rbx
+                or r11, rax
+                mov [r10], r11
+                inc rcx
+                cmp rcx, 512
+                jl .lp2
+            inc r8
+            cmp r8, 8
+            jl .lpp2
+
+        ;;
+
         mov rsi, elf
         add rsi, [elf+0x20]
         movzx rcx, word [elf + 0x38]

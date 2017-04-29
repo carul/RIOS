@@ -15,7 +15,9 @@ deploy_kernel: compile_kernel deploy_bootloader
 	cat ./KERNEL/kernel.bin >> floppy.bin
 
 compile_kernel:
-	g++ -nostdlib -m64 -masm=intel -std=c++14 ./KERNEL/kernel_main.cpp -o ./KERNEL/kernel.bin
+	g++ -c -nostdlib -m64 -masm=intel -std=c++14 ./KERNEL/kernel_main.cpp -o ./KERNEL/kernel_main.o
+	g++ -c -nostdlib -m64 -masm=intel -std=c++14 ./KERNEL/vesa.cpp -o ./KERNEL/vesa.o
+	g++ ./KERNEL/kernel_main.o ./KERNEL/vesa.o
 
 deploy_bootloader: compile_bootloader
 	cat ./BOOTLOADER/stage1.bin ./BOOTLOADER/stage2.bin > floppy.bin
@@ -27,6 +29,8 @@ compile_bootloader: ./BOOTLOADER/stage1.asm ./BOOTLOADER/stage2.asm
 clean_temp:
 	rm ./BOOTLOADER/stage1.bin
 	rm ./BOOTLOADER/stage2.bin
+	rm ./KERNEL/vesa.o
+	rm ./KERNEL/kernel_main.o
 	rm ./KERNEL/kernel.bin
 	rm floppy.bin
 	rm bochsout.txt
